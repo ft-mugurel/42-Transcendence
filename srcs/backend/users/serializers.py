@@ -2,13 +2,19 @@ from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from .models import CustomUser
+#from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['id', 'username', 'email', 'password']
+        fields = [
+            'id', 'username', 'email', 'password', 'friends', 'blocked_users', 
+            'friend_requests', 'played_games', 'game_rank', 'isActiveTwoFactor',
+            'secret_key', 'qr_code', 'profile_picture', 'bio'
+        ]
         extra_kwargs = {
-            'password': {'write_only': True}
+            'password': {'write_only': True},
+            'profile_picture': {'required': False}
         }
 
     def validate_password(self, value):
@@ -22,6 +28,8 @@ class CustomUserSerializer(serializers.ModelSerializer):
         user = CustomUser.objects.create_user(
             email=validated_data['email'],
             username=validated_data['username'],
-            password=validated_data['password']
+            password=validated_data['password'],
         )
+        #user.generate_secret_key()
         return user
+

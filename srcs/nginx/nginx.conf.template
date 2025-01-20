@@ -22,7 +22,8 @@ http {
 
         ssl_certificate /etc/nginx/ssl/myself-sign.crt;
         ssl_certificate_key /etc/nginx/ssl/myself-sign.key;
-        ssl_protocols TLSv1.2 TLSv1.3 TSLv1.1;
+        ssl_protocols TLSv1.2 TLSv1.3; 
+        #TLSv1.1;
 
         # Frontend için ana sayfa
         location / {
