@@ -1,3 +1,5 @@
+import { initSocket } from "./index.js";
+
 const appDiv = document.getElementById('app');
 const API_BASE = '/api/users';
 const API_URLS = {
@@ -8,7 +10,7 @@ const API_URLS = {
 };
 
 // Çerezden CSRF token'ı alma
-function getCookie(name) {
+export function getCookie(name) {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
     if (parts.length === 2) return parts.pop().split(';').shift();
@@ -22,8 +24,78 @@ function loadPage(page) {
         .then(html => {
             appDiv.innerHTML = html;
             attachFormHandlers();
+            if (page == 'frontend_static/game.html') {
+                initSocket();
+            }
         })
         .catch(err => console.warn('Failed to load page', err));
+}
+
+function saveGameData(gameData) {
+    fetch('/api/dashboard/save_game_data/', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access')}`, // Token ile yetkilendirme
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken') // CSRF koruması için
+        },
+        credentials: 'include',
+        body: JSON.stringify(gameData) // GameData'yı JSON olarak gönderiyoruz
+    })
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error('Oyun verisi kaydedilemedi');
+            }
+            return response.json();
+        })
+        .then((data) => {
+            console.log('Oyun verisi başarıyla kaydedildi:', data);
+            // Veriler kaydedildikten sonra dashboard'u yükle
+            loadDashBoard();
+        })
+        .catch((error) => {
+            console.error('Hata:', error);
+        });
+}
+
+function loadDashBoard() {
+    // API endpoint'i ve kullanıcı adı sorgusu
+    fetch(`/api/dashboard/get_user_profile_stats/`, {
+        method: 'GET', // Ya da GET, backend API'nize göre değişebilir
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access')}`,
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        credentials: 'include',
+    })
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error('Veriler alınamadı');
+            }
+            return response.json();
+        })
+        .then((data) => {
+            if (data && data.data) {
+                const stats = data.data;
+
+                // HTML'deki alanları doldur
+                document.getElementById('stat-username').textContent = stats.username || '-';
+                document.getElementById('stat-total-wins').textContent = stats.total_wins || '0';
+                document.getElementById('stat-total-games').textContent = stats.total_games || '0';
+                document.getElementById('stat-casual-rating').textContent = stats.casual_rating || '0';
+                document.getElementById('stat-tournament-rating').textContent = stats.tournament_rating || '0';
+                document.getElementById('stat-goals-scored').textContent = stats.goals_scored || '0';
+                document.getElementById('stat-goals-conceded').textContent = stats.goals_conceded || '0';
+                document.getElementById('stat-win-rate').textContent = (stats.win_rate * 100).toFixed(2) + '%' || '0%';
+                document.getElementById('stat-streak').textContent = stats.streak || '0';
+            } else {
+                console.error('Beklenmedik veri formatı:', data);
+            }
+        })
+        .catch((error) => {
+            console.error('Hata:', error);
+        });
 }
 
 async function fetchAndUpdate(url, listId) {
@@ -367,7 +439,9 @@ async function loadUserProfile() {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('access')}`,
                 'Content-Type': 'application/json',
-            }
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            credentials: 'include',
         });
 
         if (response.status === 401) {
@@ -378,7 +452,10 @@ async function loadUserProfile() {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access')}`,
                     'Content-Type': 'application/json',
-                }
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                credentials: 'include',
+
             });
             if (!retryResponse.ok) {
                 throw new Error('Profile yüklenemedi.');
@@ -624,6 +701,24 @@ async function fetchUserBio() {
 // Form İşlemleri
 function attachFormHandlers() {
 
+
+    
+    document.getElementById('dashboard-button')?.addEventListener('click', () => {
+        loadPage('frontend_static/dashboard.html')
+        const gameData = {
+            game_type: "casual", // casual veya tournament
+            player1_name: "mkati", // Oyuncu 1 kullanıcı adı
+            player2_name: "medayi", // Oyuncu 2 kullanıcı adı
+            player1_goals: 4, // Oyuncu 1 gol sayısı
+            player2_goals: 2, // Oyuncu 2 gol sayısı
+            game_date: "2025-01-21", // Tarih
+            game_played_time: 14.5 // Oyun süresi
+        };
+        saveGameData(gameData);
+    });
+
+    document.getElementById('pong-game')?.addEventListener('click', () => loadPage('frontend_static/game.html'));
+
     if (document.getElementById('sent-requests') || document.getElementById('received-requests') || document.getElementById('all-requests')) {
         updateAllLists(); // İlk güncelleme
         setInterval(updateAllLists, 10000); // 10 saniyede bir güncelle
@@ -633,10 +728,36 @@ function attachFormHandlers() {
     document.getElementById('go-to-register')?.addEventListener('click', () => loadPage('frontend_static/register.html'));
 
     // Logout
-    document.getElementById('logout-button')?.addEventListener('click', () => {
-        localStorage.removeItem('access');
-        alert('Logged out successfully');
-        loadPage('frontend_static/login.html');
+    document.getElementById('logout-button')?.addEventListener('click', async () => {
+        try {
+            // Backend'e logout isteği at
+            const response = await fetch(`${API_BASE}/logout/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('access')}`,
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                credentials: 'include', // Cookie'leri dahil etmek için
+            });
+    
+            if (response.ok) {
+                // LocalStorage'dan token kaldır
+                localStorage.removeItem('access');
+                
+                // Kullanıcıya mesaj göster
+                alert('Logged out successfully');
+                
+                // Login sayfasına yönlendir
+                loadPage('frontend_static/login.html');
+            } else {
+                const data = await response.json();
+                alert(`Logout failed: ${data.error || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Error during logout:', error);
+            alert('An error occurred while logging out.');
+        }
     });
 
     // Profil Yükleme

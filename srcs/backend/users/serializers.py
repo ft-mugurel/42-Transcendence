@@ -9,8 +9,10 @@ class CustomUserSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = [
             'id', 'username', 'email', 'password', 'friends', 'blocked_users', 
-            'friend_requests', 'played_games', 'game_rank', 'isActiveTwoFactor',
-            'secret_key', 'qr_code', 'profile_picture', 'bio'
+            'friend_requests', 'isActiveTwoFactor',
+            'secret_key', 'qr_code', 'profile_picture', 'bio', 'total_wins', 'total_games',
+            'win_streak', 'lose_streak', 'casual_rating',
+            'goals_scored', 'goals_conceded',
         ]
         extra_kwargs = {
             'password': {'write_only': True},

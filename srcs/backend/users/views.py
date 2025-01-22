@@ -149,6 +149,13 @@ class OAuthCallbackView(APIView):
             secure=True,
             samesite='None'
         )
+        response.set_cookie(
+            key='access',
+            value=str(refresh.access_token),
+            httponly=True,
+            secure=True,
+            samesite='None'
+        )
 
         return response
 
@@ -224,15 +231,37 @@ class LoginView(APIView):
             secure=True,
             samesite='None'
         )
+        response.set_cookie(
+            key='access',
+            value=str(refresh.access_token),  # Refresh token cookie'ye yazılır
+            httponly=True,
+            secure=True,
+            samesite='None'
+        )
         return response
 
 class LogoutView(APIView):
     def post(self, request):
         response = Response()
-        response.delete_cookie('jwt')  # Çerezi sil
         response.data = {
             'message': 'Logged out successfully'
         }
+        response.set_cookie(
+            key='refresh',
+            value='',
+            httponly=True,
+            secure=True,
+            samesite='None',
+            max_age=0  # Cookie süresini sıfır yapar
+        )
+        response.set_cookie(
+            key='access',
+            value='',
+            httponly=True,
+            secure=True,
+            samesite='None',
+            max_age=0  # Cookie süresini sıfır yapar
+        )
         return response
 
 class UserProfileView(APIView):
