@@ -67,15 +67,15 @@ class SaveGameDataView(APIView):
             return Response({'error': f'Unexpected error: {str(e)}'}, status=500)
 
 
-
 class GetUserProfileStatsView(APIView):
-    permission_classes = [IsAuthenticated]  # Kullanıcının giriş yapmış olması gerekiyor
+    permission_classes = [AllowAny]
     def get(self, request, *args, **kwargs):
         try:
-            # Token'dan gelen kullanıcı
-            user = request.user
-            if not user or not user.is_authenticated:
-                raise PermissionDenied("Authentication credentials were not provided.")
+            username = request.GET.get('username')
+            if username:
+                user = get_object_or_404(CustomUser, username=username)
+            else:
+                raise ValidationError('Username parameter is required.')
 
             user_stats = {
                 'username': user.username,
@@ -97,13 +97,13 @@ class GetUserProfileStatsView(APIView):
             return Response({'error': str(e)}, status=500)
 
 
-
 class GetGameStatsView(APIView):
+    permission_classes = [AllowAny]
     def get(self, request, *args, **kwargs):
         try:
-            game_id = request.query_params.get('game_id')
+            game_id = request.GET.get('game_id')
             if not game_id:
-                raise ValidationError("Game ID parameter is required.")
+                raise ValidationError(f"Game ID parameter is required.: " + str(game_id))
             game = get_object_or_404(GameData, game_id=game_id)
             serializer = getGameDataSerializer(game)
             return Response({'message': 'Game statistics retrieved successfully', 'data': serializer.data})
