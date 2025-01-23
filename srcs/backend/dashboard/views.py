@@ -8,20 +8,19 @@ from .utils import updateUsersAfterSave
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import ValidationError, PermissionDenied
 
+
 class SaveGameDataView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
         try:
             data = request.data
-            # Oyuncuları getirirken hata oluşabilir
             try:
                 player1 = get_object_or_404(CustomUser, username=data['player1_name'])
                 player2 = get_object_or_404(CustomUser, username=data['player2_name'])
             except Exception as e:
                 return Response({'error': f'Player retrieval error: {str(e)}'}, status=400)
 
-            # Kazanan ve kaybeden belirle
             if data['player1_goals'] > data['player2_goals']:
                 winner, loser = player1, player2
             elif data['player1_goals'] < data['player2_goals']:
@@ -29,7 +28,6 @@ class SaveGameDataView(APIView):
             else:
                 return Response({'error': 'The game cannot end in a tie.'}, status=400)
 
-            # GameData oluştur
             try:
                 game_data = GameData.objects.create(
                     game_type=data['game_type'],
@@ -52,17 +50,13 @@ class SaveGameDataView(APIView):
                     game_date=data['game_date'],
                     game_played_time=data['game_played_time'],
                 )
+                game_data.save()
+                updateUsersAfterSave(game_data)
             except Exception as e:
                 return Response({'error': f'Game data creation error: {str(e)}'}, status=500)
 
-            # Kullanıcı verilerini güncelle
-            try:
-                updateUsersAfterSave(game_data)
-            except Exception as e:
-                return Response({'error': f'User update error: {str(e)}'}, status=500)
-
             serializer = GameDataSerializer(game_data)
-            return Response({'message': 'Game data saved successfully', 'data': serializer.data})
+            return Response({'message': 'Game data saved successfully', 'data': serializer.data}, status=201)
         except Exception as e:
             return Response({'error': f'Unexpected error: {str(e)}'}, status=500)
 
