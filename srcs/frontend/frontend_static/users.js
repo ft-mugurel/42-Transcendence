@@ -3,7 +3,7 @@ import { initSocket } from "./index.js";
 const token = localStorage.getItem('access');
 
 
-const socket = new WebSocket(`wss://192.168.68.110/ws/gamerequest/${token}/`);
+const socket = new WebSocket(`wss://10.11.244.64/ws/gamerequest/${token}/`);
 
 socket.onopen = () => {
 };
