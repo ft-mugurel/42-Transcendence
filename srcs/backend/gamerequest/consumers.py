@@ -46,10 +46,32 @@ class GameRequestSocketConsumer(AsyncWebsocketConsumer):
                 await channel_layer.send(
                     connected_users[receiver.id],
                     {
-                        "type": "game_request",
+                        'type': 'game_request',
                         'message': {
-                            "type": "game_request",
-                            "username": sender.username,
+                            'type': 'game_request',
+                            'sender': sender.username,
+                        }
+                    }
+                )
+            else:
+                await self.send(text_data=json.dumps({
+                    "error": "User is not connected."
+                }))
+        elif data["type"] == "accept_request":
+            token = self.scope["url_route"]["kwargs"]["token"]
+            sender = await get_user_from_jwt(token)
+            receiver_username = data["receiver"]
+            receiver = await database_sync_to_async(CustomUser.objects.get)(username=receiver_username)
+            if receiver and receiver.id in connected_users:
+                channel_layer = get_channel_layer()
+                await channel_layer.send(
+                    connected_users[receiver.id],
+                    {
+                        'type': 'accept_request',
+                        'message': {
+                            'type': 'accept_request',
+                            'sender': sender.username,
+                            'uid': data["uid"],
                         }
                     }
                 )
@@ -59,8 +81,7 @@ class GameRequestSocketConsumer(AsyncWebsocketConsumer):
                 }))
 
     async def game_request(self, event):
-        message = event["message"]
-        await self.send(text_data=json.dumps({
-            "message": message
-        }))
+        await self.send(text_data=json.dumps(event['message']))
 
+    async def accept_request(self, event):
+        await self.send(text_data=json.dumps(event['message']))
