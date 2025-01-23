@@ -1,5 +1,36 @@
 import { initSocket } from "./index.js";
 
+const token = localStorage.getItem('access');
+
+
+const socket = new WebSocket(`wss://192.168.159.107/ws/gamerequest/${token}/`);
+
+socket.onopen = () => {
+		sendGameRequest("mtumtu")
+};
+
+socket.onmessage = function (e) {
+		const data = JSON.parse(e.data);
+		console.log(data)
+		if (data.type === "game_request") {
+				console.log("game request geldi")
+		} 
+};
+
+socket.onclose = () => {
+    console.log("WebSocket bağlantısı kapandı.");
+};
+
+function sendGameRequest(username) {
+		console.log(username);
+		socket.send(
+				JSON.stringify({
+						type: "send_request",
+						receiver: username,
+				})
+		);
+}
+
 const appDiv = document.getElementById('app');
 const API_BASE = '/api/users';
 const API_URLS = {
