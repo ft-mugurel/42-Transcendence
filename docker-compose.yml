@@ -72,8 +72,7 @@ services:
     volumes:
       - ./srcs/nginx:/etc/nginx/conf.d
       - ./srcs/backend/static:/usr/share/nginx/html/bstatic
-      - ./srcs/three-demo:/usr/share/nginx/html
-      - ./srcs/frontend/frontend_static:/usr/share/nginx/html/frontend_static
+      - ./srcs/frontend:/usr/share/nginx/html
     networks:
       - trans_network
     restart: always
