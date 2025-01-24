@@ -59,7 +59,16 @@ restart: down clean all
 remove:
 	@$(COMPOSE) down --volumes --remove-orphans
 
-clean: remove
+rm_pycache:
+	@sudo rm -rf ./srcs/backend/*/__pycache__/
+	@sudo rm -rf ./srcs/backend/*/migrations/__pycache__/
+	@sudo rm -rf ./srcs/backend/*/migrations/00*
+	@sudo rm -rf ./srcs/game/*/__pycache__/
+	@sudo rm -rf ./srcs/game/websocket/__pycache__/
+	@sudo rm -rf ./srcs/game/websocket/migrations/__pycache__/
+	@sudo rm -rf ./srcs/game/websocket/migrations/00*
+
+clean: rm_pycache remove
 	@$(DOCKER) volume prune -f
 	@$(DOCKER) network prune -f
 	@$(DOCKER) container prune -f

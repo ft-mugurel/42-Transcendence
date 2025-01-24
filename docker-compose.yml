@@ -5,7 +5,6 @@ services:
     container_name: django
     entrypoint: |
       bash -c "
-        python manage.py migrate admin zero
         python manage.py migrate users zero
         python manage.py makemigrations users
         python manage.py migrate users
@@ -13,8 +12,6 @@ services:
         python manage.py migrate social
         python manage.py makemigrations dashboard
         python manage.py migrate dashboard
-        python manage.py makemigrations admin
-        python manage.py migrate admin
         python manage.py makemigrations &&
         python manage.py makemigrations &&
         python manage.py migrate &&
