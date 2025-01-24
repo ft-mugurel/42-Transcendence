@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'social',
     'dashboard',
     'gamerequest',
+    # 'tournament',
 ]
 
 # REST framework settings
@@ -186,4 +187,5 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'id',
 }
 
-USE_MOCK_DATA = True  # Sahte verileri etkinleştirmek için True yapın
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

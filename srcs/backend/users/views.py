@@ -156,7 +156,13 @@ class OAuthCallbackView(APIView):
             secure=True,
             samesite='None'
         )
-
+        response.set_cookie(
+            key='username',
+            value=user.username,
+            httponly=False,
+            secure=True,
+            samesite='None'
+        )
         return response
 
 class CSRFTokenView(APIView):
@@ -238,6 +244,13 @@ class LoginView(APIView):
             secure=True,
             samesite='None'
         )
+        response.set_cookie(
+            key='username',
+            value=user.username,
+            httponly=False,
+            secure=True,
+            samesite='None'
+        )
         return response
 
 class LogoutView(APIView):
@@ -261,6 +274,13 @@ class LogoutView(APIView):
             secure=True,
             samesite='None',
             max_age=0  # Cookie süresini sıfır yapar
+        )
+        response.set_cookie(
+            key='username',
+            value='',
+            httponly=False,
+            secure=True,
+            samesite='None'
         )
         return response
 
