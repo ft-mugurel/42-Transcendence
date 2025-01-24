@@ -1,0 +1,3 @@
+[submodule "srcs/frontend"]
+	path = srcs/frontend
+	url = git@github.com:root-transcendence/three-demo
